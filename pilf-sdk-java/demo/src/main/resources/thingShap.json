@@ -1,0 +1,71 @@
+{
+    "subscriptions":{
+
+    },
+    "serviceMappings":{
+
+    },
+    "eventDefinitions":{
+
+    },
+    "serviceDefinitions":{
+
+    },
+    "propertyDefinitions":{
+        "fff":{
+            "name":"fff",
+            "value":"11",
+            "aspects":{
+                "isLogged":false,
+                "cacheTime":0,
+                "isReadOnly":false,
+                "isPersistent":false,
+                "dataChangeType":""
+            },
+            "ordinal":4,
+            "baseType":"NUMBER",
+            "sourceName":"",
+            "sourceType":"Unknown",
+            "description":"111",
+            "isLocalOnly":false,
+            "defaultValue":true
+        },
+        "电压":{
+            "name":"电压",
+            "value":"5.1111111111111111111111111111111111111111111111111111",
+            "aspects":{
+                "isLogged":false,
+                "cacheTime":0,
+                "isReadOnly":false,
+                "isPersistent":false,
+                "dataChangeType":"Off"
+            },
+            "ordinal":2,
+            "baseType":"INTEGER",
+            "sourceName":"",
+            "sourceType":"Unknown",
+            "isLocalOnly":true,
+            "defaultValue":true
+        },
+        "电流":{
+            "name":"电流",
+            "value":"6",
+            "aspects":{
+                "isLogged":false,
+                "cacheTime":0,
+                "isReadOnly":false,
+                "isPersistent":true,
+                "dataChangeType":""
+            },
+            "ordinal":2,
+            "baseType":"INTEGER",
+            "sourceName":"",
+            "sourceType":"Unknown",
+            "isLocalOnly":true,
+            "defaultValue":true
+        }
+    },
+    "serviceImplementations":{
+
+    }
+}

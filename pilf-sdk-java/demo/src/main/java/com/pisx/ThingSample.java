@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @Description: 定义物模型
@@ -22,8 +21,6 @@ import java.util.Map;
 public class ThingSample extends VirtualThing {
 
     private String propertyDefinitions;
-
-    //private IotGatewayTopic iotGatewayTopic;
 
     public ThingSample(String identifier) {
         super(identifier);

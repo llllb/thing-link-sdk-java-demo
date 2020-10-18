@@ -43,7 +43,7 @@ public class RequestMessage {
     public RequestMessage(String id, String version, Object params) {
         super();
         this.id = id;
-       // this.version = version;
+        this.version = version;
         this.params = params;
     }
 }

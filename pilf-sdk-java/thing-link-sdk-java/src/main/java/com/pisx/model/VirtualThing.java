@@ -1,9 +1,9 @@
 package com.pisx.model;
 
-import cn.hutool.core.util.StrUtil;
 import com.pisx.exception.ErrorCode;
 import com.pisx.util.MqttUtil;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,6 +14,7 @@ import java.util.Map;
  * @date: 2020年10月14日 10:22
  */
 @Data
+@Slf4j
 public abstract class VirtualThing {
     /**
      * 设备唯一识别码
@@ -22,12 +23,12 @@ public abstract class VirtualThing {
     /**
      * 上下线
      */
-    private boolean isOnlie;
+    private boolean isOnline;
 
     public VirtualThing(String identifier) {
         this.identifier = identifier;
-        this.isOnlie = false;
-        MqttUtil.getInstance().setVirtualThing(this);
+        this.isOnline = false;
+        MqttUtil.getInstance().setDevice(identifier, this);
     }
 
     /**
@@ -65,33 +66,36 @@ public abstract class VirtualThing {
      * 设备上线到平台
      * @return
      */
-//    public int online() {
-//        if (this.isOnlie) {
-//            return ErrorCode.SUCCESS;
-//        }
-//        int code = MqttUtil.getInstance().online(this.identifier);
-//        if (ErrorCode.SUCCESS == code) {
-//            this.isOnlie = true;
-//        }
-//        return code;
-//    }
+    public int online() {
+        log.debug("isOnline: {}>>>>>>>>>>>>>>>>>>>>>>>>>"+this.isOnline);
+        if (this.isOnline) {
+            return ErrorCode.SUCCESS;
+        }
+        int code = MqttUtil.getInstance().online(this.identifier);
+        log.debug("code:{}>>>>>>>>>>>>>>>>>>>>>>"+code);
+        if (ErrorCode.SUCCESS == code) {
+            this.isOnline = true;
+        }
+        log.debug("isOnline: {}>>>>>>>>>>>>>>>>>>>>>>>>>"+this.isOnline);
+        return code;
+    }
 
     /**
      * 设备下线
      * @return
      */
-//    public int offline() {
-//        if (!this.isOnline) {
-//            return LedaErrorCode.LE_SUCCESS;
-//        }
-//
-//        int code = LedaProxy.getInstance().proxyOffline(this.productKey, this.deviceName);
-//        if (LedaErrorCode.LE_SUCCESS == code ){
-//            this.isOnline = false;
-//        }
-//
-//        return code;
-//    }
+    public int offline() {
+        if (!this.isOnline) {
+            return ErrorCode.SUCCESS;
+        }
+
+        int code = MqttUtil.getInstance().offline(this.identifier);
+        if (ErrorCode.SUCCESS == code ){
+            this.isOnline = false;
+        }
+
+        return code;
+    }
 
     /**
      * 上传设备属性数据到平台
@@ -103,9 +107,9 @@ public abstract class VirtualThing {
         if (null == properties || 0 == properties.size()) {
             return ErrorCode.ERROR_INVALID_PARAM;
         }
-//        if (!this.isOnline) {
-//            return ErrorCode.ERROR_DEVICE_UNREGISTER;
-//        }
+        if (!this.isOnline) {
+            return ErrorCode.ERROR_DEVICE_UNREGISTER;
+        }
         return MqttUtil.getInstance().reportProperties(this.identifier, properties);
     }
 

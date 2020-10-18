@@ -20,11 +20,11 @@ public class IotGatewayTopic {
 
 
 
-    private String loginTopic = "edge/device/%s/%s/%s/request/iot/driver/proxy/x/online";
-    private String loginReplyTopic = "edge/iot/driver/proxy/x/response/device/%s/%s/%s/online";
+    private String loginTopic = "device/request/driver/online/%s";
+    private String loginReplyTopic = "driver/response/device/online/%s";
 
-    private String logoutTopic = "edge/device/%s/%s/%s/request/iot/driver/proxy/x/offline";
-    private String logoutReplyTopic = "edge/iot/driver/proxy/x/response/device/%s/%s/%s/offline";
+    private String logoutTopic = "device/request/driver/offline/%s";
+    private String logoutReplyTopic = "driver/response/device/offline/%s";
 
 
     public String reportPropertyTopic(String identifier) {
@@ -53,16 +53,16 @@ public class IotGatewayTopic {
     }
 
 
-    public String loginTopic(String productKey, String deviceName) {
-        return String.format(this.loginTopic, productKey, deviceName);
+    public String loginTopic(String identifier) {
+        return String.format(this.loginTopic, identifier);
     }
 
-    public String loginReplyTopic(String productKey, String deviceName) {
-        return String.format(this.loginReplyTopic, productKey, deviceName);
+    public String loginReplyTopic(String identifier) {
+        return String.format(this.loginReplyTopic, identifier);
     }
 
-    public String logoutTopic(String productKey, String deviceName) {
-        return String.format(this.logoutTopic, productKey, deviceName);
+    public String logoutTopic(String identifier) {
+        return String.format(this.logoutTopic, identifier);
     }
 
     public String logoutReplyTopic(String productKey, String deviceName) {

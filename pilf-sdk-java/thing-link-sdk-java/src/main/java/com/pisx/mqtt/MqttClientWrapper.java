@@ -8,10 +8,6 @@ import org.slf4j.LoggerFactory;
 public class MqttClientWrapper implements MqttCallbackExtended{
     private final Logger logger = LoggerFactory.getLogger(MqttClientWrapper.class);
 
-    String[] topicFilters = {
-            "driver/callservice/request/thing/#"
-    };
-
     private String clientId;
     private String ip;
     private short port;
@@ -101,7 +97,7 @@ public class MqttClientWrapper implements MqttCallbackExtended{
     }
 
     public MqttClientWrapper(String clientId, String ip, short port) throws MqttException {
-        this.logger.debug("mqtt client {} connect with broker ip: {} port: {}", clientId, ip, port);
+        this.logger.debug("mqtt client {} 连接... broker ip: {} port: {}", clientId, ip, port);
 
         this.clientId = clientId;
         this.ip = ip;
@@ -113,7 +109,7 @@ public class MqttClientWrapper implements MqttCallbackExtended{
     }
 
     public void connect() throws MqttSecurityException, MqttException {
-        this.logger.debug("mqtt client {} connect with option userName: {} password: {} automaticReconnect: {} cleanSession: {}",
+        this.logger.debug("mqtt client {} 连接... userName: {} password: {} automaticReconnect: {} cleanSession: {}",
                 this.clientId, this.userName, this.password, this.autoReconnect, this.cleanSession);
 
         this.connOpt.setUserName(this.userName);
@@ -124,25 +120,25 @@ public class MqttClientWrapper implements MqttCallbackExtended{
     }
 
     public void disConnect() throws MqttException {
-        this.logger.debug("mqtt client {} disconnect with broker ip: {} port: {}", this.clientId, this.ip, this.port);
+        this.logger.debug("mqtt client {} 断开连接 broker ip: {} port: {}", this.clientId, this.ip, this.port);
         this.client.disconnect();
     }
 
     public void subscribe(String topicFilter) throws MqttException {
-        this.logger.debug("mqtt client {} subscribe topic: {}", this.clientId, topicFilter);
+        this.logger.debug("mqtt client {} 订阅 topic: {}", this.clientId, topicFilter);
         this.client.subscribe(topicFilter);
     }
 
     public void subscribe(String[] topicFilters) throws MqttException {
         for (String topicFilter : topicFilters) {
-            this.logger.debug("mqtt client {} subscribe topic: {}", this.clientId, topicFilter);
+            this.logger.debug("mqtt client {} 订阅 topic: {}", this.clientId, topicFilter);
         }
 
         this.client.subscribe(topicFilters);
     }
 
     public void publish(String topic, String payload) throws MqttPersistenceException, MqttException {
-        this.logger.debug("mqtt client {} publish topic: {} with payload: {}", this.clientId, topic, payload);
+        this.logger.debug("mqtt client {} 发布消息到 topic: {} 消息体: {}", this.clientId, topic, payload);
         this.client.publish(topic, payload.getBytes(), this.qos, this.retained);
     }
 
@@ -151,7 +147,7 @@ public class MqttClientWrapper implements MqttCallbackExtended{
         System.out.println(topic);
         if (null != this.mqttUtil) {
             String payload = new String(message.getPayload());
-            logger.debug("topic: {} messageArrived: {}", topic, payload);
+            logger.debug("topic: {} 收到消息: {}", topic, payload);
             this.mqttUtil.receiveMessage(topic, payload);
         }
     }
@@ -163,12 +159,7 @@ public class MqttClientWrapper implements MqttCallbackExtended{
 
     @Override
     public void connectComplete(final boolean reconnect, final String serverURI) {
-        try {
-            this.subscribe(topicFilters);
-        } catch (MqttException e) {
-            logger.error("订阅失败！");
-        }
-        logger.debug("mqtt connect complete.");
+        logger.debug("成功连接MQTT>>>>>>>>>>>>>>>>");
     }
 
     @Override

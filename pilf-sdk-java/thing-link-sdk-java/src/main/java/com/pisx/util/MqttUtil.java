@@ -10,6 +10,7 @@ import com.pisx.mqtt.IotGatewayTopic;
 import com.pisx.mqtt.MqttClientWrapper;
 import com.pisx.value.RequestMessage;
 import com.pisx.value.ResponseMessage;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,14 +44,15 @@ public class MqttUtil {
     private long msgId = 1;
     private IotGatewayTopic iotGatewayTopic;
     private MqttClientWrapper mqttClient;
-    private VirtualThing virtualThing;
+    private Map<String, VirtualThing> deviceList;
     private Map<String, ResponseMessage> rspMsgQueque;
     private ExecutorService threadPool;
 
     private MqttUtil() {
-        //this.logger.info("start java driver id {} name {}", this.driverId, this.driverName);
+        this.logger.info("start java driver id {}  >>>>>>>>>>>>>>>>", "2c9480ed71b4ee7f0171b4ee7fe20000");
         this.initMqttClientWrapper();
         this.iotGatewayTopic = new IotGatewayTopic();
+        this.deviceList = new Hashtable<String, VirtualThing>();
         this.rspMsgQueque = new Hashtable<String, ResponseMessage>();
         this.threadPool = new ThreadPoolExecutor(MqttUtil.THREAD_POOL_SIZE,
                 MqttUtil.THREAD_POOL_SIZE,
@@ -87,6 +89,16 @@ public class MqttUtil {
 
                 if (null != mqttClient) {
                     this.mqttClient.connect();
+                    String[] topicFilters = {
+                            "driver/callservice/request/thing/2c9480ed71b4ee7f0171b4ee7fe20000",
+                            "driver/request/device/callservice/thing/service/2c9480ed71b4ee7f0171b4ee7fe20000",
+                            "driver/response/device/online/2c9480ed72fecf7b0172fecf7b380000"
+                    };
+                    try {
+                        this.mqttClient.subscribe(topicFilters);
+                    } catch (MqttException e) {
+                        logger.error("订阅失败！");
+                    }
                     break;
                 }
             } catch (Exception e) {
@@ -101,12 +113,8 @@ public class MqttUtil {
         }
     }
 
-    public VirtualThing getVirtualThing() {
-        return virtualThing;
-    }
-
-    public void setVirtualThing(VirtualThing virtualThing) {
-        this.virtualThing = virtualThing;
+    public Map<String, VirtualThing> getDeviceList() {
+        return this.deviceList;
     }
 
     public IotGatewayTopic getIotGatewayTopic() {
@@ -164,7 +172,6 @@ public class MqttUtil {
             this.rspMsgQueque.put(reqMsg.getId(), rspMsg);
             synchronized (rspMsg) {
                 this.mqttClient.publish(topic, JSON.toJSONString(reqMsg));
-
                 long startTimeStamp = System.currentTimeMillis();
                 rspMsg.wait(MqttUtil.SYNC_SEND_TIMEOUT);
                 long endTimeStamp = System.currentTimeMillis();
@@ -217,14 +224,13 @@ public class MqttUtil {
         return rspMsg;
     }
 
-//    public void proxySetDevice(VirtualThing virtualThing) {
-//        String deviceId = productKey + deviceName;
-//        this.deviceList.put(deviceId, device);
-//    }
+    public void setDevice(String identifier, VirtualThing virtualThing) {
+        this.deviceList.put(identifier, virtualThing);
+    }
 
 
-    public int proxyOnline(String productKey, String deviceName) {
-        ResponseMessage response = this.sendSyncRequest(this.iotGatewayTopic.loginTopic(productKey, deviceName));
+    public int online(String identifier) {
+        ResponseMessage response = this.sendSyncRequest(this.iotGatewayTopic.loginTopic(identifier));
         if (null == response) {
             return ErrorCode.ERROR_UNKNOWN;
         }
@@ -232,8 +238,8 @@ public class MqttUtil {
         return response.getCode();
     }
 
-    public int proxyOffline(String productKey, String deviceName) {
-        ResponseMessage response = this.sendSyncRequest(this.iotGatewayTopic.logoutTopic(productKey, deviceName));
+    public int offline(String identifier) {
+        ResponseMessage response = this.sendSyncRequest(this.iotGatewayTopic.logoutTopic(identifier));
         if (null == response) {
             return ErrorCode.ERROR_UNKNOWN;
         }
@@ -243,6 +249,7 @@ public class MqttUtil {
 
     /**
      * 上报属性数据
+     *
      * @param identifier
      * @param properties
      * @return
@@ -267,7 +274,7 @@ public class MqttUtil {
     public void sendResponse(String methodName, String topic, String msgId, Object object) {
         JSONObject response = new JSONObject();
         response.put("id", msgId);
-        //response.put("version", MqttUtil.PROTOCOL_VERSION);
+        response.put("version", MqttUtil.PROTOCOL_VERSION);
 
         try {
             if (null != object) {
@@ -355,7 +362,7 @@ public class MqttUtil {
             RequestMessage reqMsg = JSON.parseObject(this.message, RequestMessage.class);
             JSONObject jsonObject = JSON.parseObject(reqMsg.getParams().toString());
             String bind = (String) jsonObject.get("_bind");
-            object = this.mqttUtil.getVirtualThing().getProperties(bind);
+            object = this.mqttUtil.getDeviceList().get(identifier).getProperties(bind);
             topic = this.mqttUtil.getIotGatewayTopic().getPropertyReplyTopic(this.identifier);
             this.mqttUtil.sendResponse(methodName, topic, reqMsg.getId(), object);
         }
@@ -368,7 +375,7 @@ public class MqttUtil {
             RequestMessage reqMsg = JSON.parseObject(this.message, RequestMessage.class);
             HashMap<String, Object> params = JSON.parseObject(((JSONObject) (reqMsg.getParams())).toJSONString(), HashMap.class);
 
-            object = this.mqttUtil.getVirtualThing().setProperties(params);
+            object = this.mqttUtil.getDeviceList().get(identifier).setProperties(params);
             topic = this.mqttUtil.getIotGatewayTopic().setPropertyReplyTopic(this.identifier);
             this.mqttUtil.sendResponse(methodName, topic, reqMsg.getId(), object);
         }
@@ -381,7 +388,7 @@ public class MqttUtil {
             RequestMessage reqMsg = JSON.parseObject(this.message, RequestMessage.class);
             HashMap<String, Object> params = JSON.parseObject(((JSONObject) (reqMsg.getParams())).toJSONString(), HashMap.class);
 
-            object = this.mqttUtil.getVirtualThing().callService(this.methodName, params);
+            object = this.mqttUtil.getDeviceList().get(identifier).callService(this.methodName, params);
             topic = this.mqttUtil.getIotGatewayTopic().serviceReplyTopic(this.identifier, this.methodName);
             this.mqttUtil.sendResponse(methodName, topic, reqMsg.getId(), object);
         }

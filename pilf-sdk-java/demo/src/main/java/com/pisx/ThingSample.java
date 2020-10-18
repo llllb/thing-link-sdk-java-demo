@@ -71,7 +71,7 @@ public class ThingSample extends VirtualThing {
      */
     @Override
     public ThingData callService(String methodName, HashMap<String, Object> params) {
-        log.info("自定义方法名称:" + methodName);
+        log.debug("自定义方法名称:" + methodName);
         HashMap<String, Object> map = new HashMap<>();
         //调用自定义方法
         long sum = sum(params.get("var1"), params.get("var2"));

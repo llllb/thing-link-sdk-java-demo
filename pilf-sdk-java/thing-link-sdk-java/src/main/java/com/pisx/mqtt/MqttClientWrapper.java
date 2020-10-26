@@ -159,12 +159,12 @@ public class MqttClientWrapper implements MqttCallbackExtended{
 
     @Override
     public void connectComplete(final boolean reconnect, final String serverURI) {
-        logger.debug("成功连接MQTT>>>>>>>>>>>>>>>>");
+        logger.debug("成功连接MQTT");
     }
 
     @Override
     public void connectionLost(final Throwable cause) {
-        logger.debug("mqtt connect lost.");
+        logger.debug("MQTT断开连接");
     }
 
     public void setCallback(MqttUtil mqttUtil) {

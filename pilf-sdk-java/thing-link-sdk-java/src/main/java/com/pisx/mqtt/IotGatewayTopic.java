@@ -6,7 +6,7 @@ public class IotGatewayTopic {
 
     private String reportEventTopic = "/device/%s/broadcast/thing/%s/%s/event/%s";
 
-    private String setPropertyTopic = "driver/proxy/x/request/device/%s/%s/%s/callservice/thing/service/property/set";
+    private String setPropertyTopic = "driver/request/device/callservice/thing/service/property/set/%s";
     private String setPropertyReplyTopic = "device/callservice/response/thing/service/property/set/%s";
 
     private String getPropertyTopic = "driver/request/device/callservice/thing/service/property/get/%s";
@@ -16,7 +16,7 @@ public class IotGatewayTopic {
     //接收平台服务调用
     private String serviceTopic = "driver/request/device/callservice/thing/service/%s";
     //回应平台服务调用
-    private String serviceReplyTopic = "device/response/driver/callservice/thing/service/%s";
+    private String serviceReplyTopic = "device/response/driver/callservice/%s/thing/service/%s";
 
 
 
@@ -31,8 +31,8 @@ public class IotGatewayTopic {
         return String.format(this.reportPropertyTopic, identifier);
     }
 
-    public String reportEventTopic(String identifier, String deviceName, String eventName) {
-        return String.format(this.reportEventTopic, deviceName, deviceName, eventName);
+    public String reportEventTopic(String identifier,String eventName) {
+        return String.format(this.reportEventTopic, identifier, eventName);
     }
 
     public String serviceTopic(String serviceName, String identifier) {

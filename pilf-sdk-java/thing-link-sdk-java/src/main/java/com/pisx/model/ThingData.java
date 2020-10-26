@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.HashMap;
 
 @Data
- public class ThingData {
+public class ThingData {
     public int code;
     public HashMap<String, Object> data;
 
@@ -13,4 +13,4 @@ import java.util.HashMap;
         this.code = code;
         this.data = data;
     }
- }
+}

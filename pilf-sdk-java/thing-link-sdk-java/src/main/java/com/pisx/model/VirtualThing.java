@@ -3,7 +3,8 @@ package com.pisx.model;
 import com.pisx.exception.ErrorCode;
 import com.pisx.util.MqttUtil;
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,8 +15,8 @@ import java.util.Map;
  * @date: 2020年10月14日 10:22
  */
 @Data
-@Slf4j
 public abstract class VirtualThing {
+    private final Logger logger = LoggerFactory.getLogger(VirtualThing.class);
     /**
      * 设备唯一识别码
      */
@@ -67,16 +68,14 @@ public abstract class VirtualThing {
      * @return
      */
     public int online() {
-        log.debug("isOnline: {}>>>>>>>>>>>>>>>>>>>>>>>>>"+this.isOnline);
         if (this.isOnline) {
             return ErrorCode.SUCCESS;
         }
         int code = MqttUtil.getInstance().online(this.identifier);
-        log.debug("code:{}>>>>>>>>>>>>>>>>>>>>>>"+code);
         if (ErrorCode.SUCCESS == code) {
             this.isOnline = true;
         }
-        log.debug("isOnline: {}>>>>>>>>>>>>>>>>>>>>>>>>>"+this.isOnline);
+        logger.debug("isOnline: {}>>>>>>>>>>>>>>>>>>>>>>>>>"+this.isOnline);
         return code;
     }
 
@@ -113,6 +112,22 @@ public abstract class VirtualThing {
         return MqttUtil.getInstance().reportProperties(this.identifier, properties);
     }
 
+    /**
+     * 上传设备属性数据到平台
+     *
+     * @param properties
+     * @return
+     */
+    public int reportDefaultProperties(Map<String ,Object> properties) {
+        if (null == properties || 0 == properties.size()) {
+            return ErrorCode.ERROR_INVALID_PARAM;
+        }
+        if (!this.isOnline) {
+            return ErrorCode.ERROR_DEVICE_UNREGISTER;
+        }
+        return MqttUtil.getInstance().reportDefaultProperties(this.identifier, properties);
+    }
+
 
     /**
      * 上传设备事件到平台
@@ -133,7 +148,7 @@ public abstract class VirtualThing {
 //            return ErrorCode.ERROR_DEVICE_UNREGISTER;
 //        }
 //
-//        return MqttUtil.getInstance().proxyReportEvents(this.identifier,eventName, outputData);
+//        return MqttUtil.getInstance().reportEvents(this.identifier,eventName, outputData);
 //    }
 
 

@@ -1,5 +1,6 @@
 package com.pisx.util;
 
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.setting.dialect.Props;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -32,14 +33,8 @@ public class MqttUtil {
     private final Logger logger = LoggerFactory.getLogger(MqttUtil.class);
 
     private final static String PROTOCOL_VERSION = "1.0";
-    private final static int SYNC_SEND_TIMEOUT = 10 * 1000;
+    private final static int SYNC_SEND_TIMEOUT = 5 * 1000;
     private final static int THREAD_POOL_SIZE = 5;
-
-    // private final static String MQTT_BROKER_IP = "127.0.0.1";
-    // private final static short MQTT_BROKER_PORT = 9883;
-
-//    private String driverId = System.getenv("FUNCTION_ID");
-//    private String driverName = System.getenv("FUNCTION_NAME");
 
     private long msgId = 1;
     private IotGatewayTopic iotGatewayTopic;
@@ -49,7 +44,7 @@ public class MqttUtil {
     private ExecutorService threadPool;
 
     private MqttUtil() {
-        this.logger.info("start java driver id {}  >>>>>>>>>>>>>>>>", "2c9480ed71b4ee7f0171b4ee7fe20000");
+        this.logger.info("start java driver id {}  >>>>>>>>>>>>>>>>", "ET99999");
         this.initMqttClientWrapper();
         this.iotGatewayTopic = new IotGatewayTopic();
         this.deviceList = new Hashtable<String, VirtualThing>();
@@ -63,12 +58,12 @@ public class MqttUtil {
 
 
     private void initMqttClientWrapper() {
-        Props props = new Props("device.properties");
+        Props props = new Props("device/properties/device.properties");
         String mqttBrokerIp = props.getProperty("mqtt.broker.ip");
         Short mqttBrokerPort = Short.valueOf(props.getProperty("mqtt.broker.port"));
         String emqxUsername = props.getProperty("emqx.username");
         String emqxPassword = props.getProperty("emqx.password");
-        String clientId = props.getProperty("client.id");
+        String clientId = props.getProperty("client.id") + RandomUtil.randomString(5);
         while (true) {
             try {
                 if (null == mqttClient) {
@@ -90,10 +85,11 @@ public class MqttUtil {
                 if (null != mqttClient) {
                     this.mqttClient.connect();
                     String[] topicFilters = {
-                            "driver/callservice/request/thing/2c9480ed71b4ee7f0171b4ee7fe20000",
-                            "driver/request/device/callservice/thing/service/2c9480ed71b4ee7f0171b4ee7fe20000",
-                            "driver/response/device/online/2c9480ed72fecf7b0172fecf7b380000"
+                            "driver/callservice/request/thing/#",
+                            "driver/request/device/callservice/thing/service/#",
                     };
+                    //"driver/response/device/online/2c9480ed71b4ee7f0171b4ee7fe20000",
+                    //"driver/request/device/callservice/thing/service/property/get/2c9480ed71b4ee7f0171b4ee7fe20000"
                     try {
                         this.mqttClient.subscribe(topicFilters);
                     } catch (MqttException e) {
@@ -159,7 +155,6 @@ public class MqttUtil {
             this.logger.warn("it's have exception {} happen when publish topic {}", e, topic);
             ret = ErrorCode.ERROR_UNKNOWN;
         }
-
         return ret;
     }
 
@@ -259,7 +254,19 @@ public class MqttUtil {
         return this.sendRequest(this.iotGatewayTopic.reportPropertyTopic(identifier), params);
     }
 
-    public int reportEvents(String productKey, String deviceName, String eventName, HashMap<String, Object> outputData) {
+    /**
+     * 上报默认属性
+     *
+     * @param identifier
+     * @param properties
+     * @return
+     */
+    public int reportDefaultProperties(String identifier, Map<String, Object> properties) {
+        JSONObject params = JSONObject.parseObject(JSON.toJSONString(properties));
+        return this.sendRequest(this.iotGatewayTopic.getPropertyReplyTopic(identifier), params);
+    }
+
+    public int reportEvents(String identifier, String eventName, HashMap<String, Object> outputData) {
         JSONObject params = new JSONObject();
         JSONObject value = new JSONObject();
         for (Map.Entry<String, Object> data : outputData.entrySet()) {
@@ -268,7 +275,7 @@ public class MqttUtil {
         params.put("value", value);
         params.put("time", System.currentTimeMillis());
 
-        return this.sendRequest(this.iotGatewayTopic.reportEventTopic(productKey, deviceName, eventName), params);
+        return this.sendRequest(this.iotGatewayTopic.reportEventTopic(identifier, eventName), params);
     }
 
     public void sendResponse(String methodName, String topic, String msgId, Object object) {
@@ -364,7 +371,7 @@ public class MqttUtil {
             String bind = (String) jsonObject.get("_bind");
             object = this.mqttUtil.getDeviceList().get(identifier).getProperties(bind);
             topic = this.mqttUtil.getIotGatewayTopic().getPropertyReplyTopic(this.identifier);
-            this.mqttUtil.sendResponse(methodName, topic, reqMsg.getId(), object);
+            this.mqttUtil.sendResponse(this.methodName, topic, reqMsg.getId(), object);
         }
 
         @SuppressWarnings("unchecked")
@@ -377,7 +384,7 @@ public class MqttUtil {
 
             object = this.mqttUtil.getDeviceList().get(identifier).setProperties(params);
             topic = this.mqttUtil.getIotGatewayTopic().setPropertyReplyTopic(this.identifier);
-            this.mqttUtil.sendResponse(methodName, topic, reqMsg.getId(), object);
+            this.mqttUtil.sendResponse(this.methodName, topic, reqMsg.getId(), object);
         }
 
         @SuppressWarnings("unchecked")
@@ -386,11 +393,12 @@ public class MqttUtil {
             Object object;
 
             RequestMessage reqMsg = JSON.parseObject(this.message, RequestMessage.class);
-            HashMap<String, Object> params = JSON.parseObject(((JSONObject) (reqMsg.getParams())).toJSONString(), HashMap.class);
 
-            object = this.mqttUtil.getDeviceList().get(identifier).callService(this.methodName, params);
-            topic = this.mqttUtil.getIotGatewayTopic().serviceReplyTopic(this.identifier, this.methodName);
-            this.mqttUtil.sendResponse(methodName, topic, reqMsg.getId(), object);
+            HashMap<String, Object> params = JSON.parseObject(((JSONObject) (reqMsg.getParams())).toJSONString(), HashMap.class);
+            String methodName = params.get("methodName").toString();
+            object = this.mqttUtil.getDeviceList().get(identifier).callService(methodName, params);
+            topic = this.mqttUtil.getIotGatewayTopic().serviceReplyTopic(methodName, this.identifier);
+            this.mqttUtil.sendResponse(this.methodName, topic, reqMsg.getId(), object);
         }
 
         @Override

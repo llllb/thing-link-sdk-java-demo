@@ -17,7 +17,7 @@ public class DataFormatter {
 
     public static Map<String, Object> formatData(String message) {
         //处理json数据
-        JSONObject jsonObject = JSON.parseObject(message);
+        JSONObject jsonObject = JSONObject.parseObject(message);
         //直接根据key的值取到value
         JSONArray jsonArray = (JSONArray) jsonObject.get("values");
         //获取timestamp
@@ -28,7 +28,7 @@ public class DataFormatter {
         //存入influxDB的数据,tags map
         TreeMap<String, Object> treeMap = new TreeMap<>();
         //key是timestamp  value是相同timestamp的消息
-        Map<Long, List<Property>> map = new HashMap<>();
+        Map<Long, List<Property>> map = new HashMap<>(16);
         //从jsonArray转成自己定义的集合
         for (int i = 0; i < jsonArray.size(); i++) {
             property = JSON.toJavaObject(jsonArray.getJSONObject(i), Property.class);
@@ -46,7 +46,7 @@ public class DataFormatter {
             }
         }
         //格式化存入influxDB的数据
-        Map<String, Object> dataFormattedMap = new HashMap<>();
+        Map<String, Object> dataFormattedMap = new HashMap<>(16);
         List<TreeMap<String, Object>> treeMapList = new ArrayList<>();
         for (Long timeStamp : map.keySet()) {
             List<Property> sameTimeList = map.get(timeStamp);
